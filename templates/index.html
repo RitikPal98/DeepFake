@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepFake Detection</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <div class="pattern-bg"></div>
+    <div class="container">
+        <!-- Theme Toggle Button -->
+        <div class="theme-toggle" id="theme-toggle">
+            <input type="checkbox" id="toggle-checkbox">
+            <label class="toggle-label" for="toggle-checkbox"></label>
+            <span id="theme-label">Light Mode</span>
+        </div>
+
+        <h1>DeepFake Detection</h1>
+        <div id="drop-area">
+            <form class="my-form">
+                <p>Upload an image or video file using the button below or by dragging and dropping it into the area</p>
+                <input type="file" id="file-input" accept="image/*,video/*" onchange="handleFiles(this.files)">
+                <label class="button" for="file-input">Select a File</label>
+            </form>
+        </div>
+        <div id="gallery"></div>
+        <div id="loader" class="loader"></div>
+        <div id="result"></div>
+    </div>
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
+</body>
+
+</html>

@@ -1,0 +1,11 @@
+flask
+torch
+torchvision
+pillow
+efficientnet_pytorch
+timm
+opencv-python
+matplotlib
+plotly
+google-generativeai
+numpy
