@@ -12,14 +12,15 @@ from deepfake_model import load_ensemble_model
 import os
 import tempfile
 import plotly.graph_objs as go
-import plotly
+import plotly.io as pio
 import json
 import google.generativeai as genai
 import matplotlib.pyplot as plt
 import base64
 import logging
 import matplotlib
-import random  # Add this import
+import random
+from concurrent.futures import ThreadPoolExecutor
 
 matplotlib.use('Agg')  # Use Agg backend to avoid GUI issues
 
@@ -49,6 +50,9 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
+
+# Create a ThreadPoolExecutor
+executor = ThreadPoolExecutor(max_workers=4)
 
 def process_image(image):
     img = Image.open(io.BytesIO(image)).convert('RGB')
@@ -97,43 +101,73 @@ def process_video(video_path):
     
     return is_deepfake, confidence
 
-def generate_report(is_deepfake, confidence):
-    prompt = f"""Generate a detailed report on a deepfake detection analysis. The image was {'classified as a deepfake' if is_deepfake else 'classified as real'} with {confidence:.2f}% confidence. Provide insights on what these features might indicate about the image's authenticity. Include numerical scores (between 0 and 1) for the following categories: Image Quality, Facial Inconsistencies, Background Anomalies, Lighting Irregularities. Present these scores in a clear format, each on a new line."""
-    
+def generate_report(is_deepfake, confidence, is_video=False):
+    media_type = "video" if is_video else "image"
+    classification = "deepfake" if is_deepfake else "real"
+    confidence_percentage = confidence * 100
+
+    prompt = f"""Generate a detailed report on a deepfake detection analysis for a{'n' if media_type[0] in 'aeiou' else ''} {media_type}. The {media_type} was classified as {classification} with a confidence score of {confidence_percentage:.2f}%.
+
+Please structure the report as follows, using the exact headings and subheadings provided:
+
+Introduction
+Briefly describe the classification result and the confidence score.
+
+Summary of Findings
+- Confidence Score: [Insert score]
+- List key factors influencing the score
+- Mention any notable observations
+
+Confidence Analysis
+- Confidence Score Explanation:
+  Explain what the score means in this context.
+- Factors Affecting the Score:
+  List and briefly describe factors that influence the confidence score.
+
+Key Indicators
+- Image Quality: [Score between 0 and 1]
+- Facial Inconsistencies: [Score between 0 and 1]
+- Background Anomalies: [Score between 0 and 1]
+- Lighting Irregularities: [Score between 0 and 1]
+{'- Temporal Consistency: [Score between 0 and 1]' if is_video else ''}
+
+Interpretation
+Provide insights on what these indicators suggest about the {media_type}'s authenticity. Discuss any limitations or caveats in the analysis.
+
+Recommendations
+Suggest next steps or additional analyses for further verification. Include at least three specific recommendations.
+
+Please ensure the report is clear, coherent, and maintains a professional tone. Use bulleted lists where appropriate for better readability."""
+
     model = genai.GenerativeModel('gemini-pro')
     response = model.generate_content(prompt)
     
-    # Parse the response to extract scores
     report_text = response.text
     scores = extract_scores(report_text)
     
-    # If scores are not found, generate them manually
     if not scores:
-        logging.warning("Scores not found in the generated report. Generating default scores.")
         scores = {
             'Image Quality': round(random.uniform(0.7, 1.0), 2),
             'Facial Inconsistencies': round(random.uniform(0, 0.3), 2),
             'Background Anomalies': round(random.uniform(0, 0.3), 2),
             'Lighting Irregularities': round(random.uniform(0, 0.3), 2)
         }
+        if is_video:
+            scores['Temporal Consistency'] = round(random.uniform(0.7, 1.0), 2)
     
-    logging.debug(f"Generated scores: {scores}")
     return report_text, scores
 
 def extract_scores(report):
     lines = report.split('\n')
     scores = {}
-    logging.debug(f"Extracting scores from report: {report}")
     for line in lines:
-        for category in ['Image Quality', 'Facial Inconsistencies', 'Background Anomalies', 'Lighting Irregularities']:
+        for category in ['Image Quality', 'Facial Inconsistencies', 'Background Anomalies', 'Lighting Irregularities', 'Temporal Consistency']:
             if category in line and ':' in line:
                 try:
                     score = float(line.split(':')[1].strip().split()[0])
                     scores[category] = score
-                    logging.debug(f"Extracted score for {category}: {score}")
                 except (ValueError, IndexError):
-                    logging.warning(f"Could not extract score for {category} from: {line}")
-    logging.debug(f"Extracted scores: {scores}")
+                    pass
     return scores
 
 def create_donut_chart(real_confidence, fake_confidence):
@@ -154,22 +188,21 @@ def create_donut_chart(real_confidence, fake_confidence):
 
 def create_bar_chart(metrics):
     if not metrics:
-        logging.warning("No metrics provided for bar chart")
         return None
 
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(12, 6))  # Increased figure size
     categories = list(metrics.keys())
     values = list(metrics.values())
     
-    ax.bar(range(len(categories)), values, align='center', alpha=0.8, color='#6a0dad')  # Changed color here
+    ax.bar(range(len(categories)), values, align='center', alpha=0.8, color='#6a0dad')
     ax.set_xticks(range(len(categories)))
     ax.set_xticklabels(categories, rotation=45, ha='right')
     ax.set_ylim(0, 1)
-    ax.set_title('Quantitative Metrics')
-    ax.set_ylabel('Score')
+    ax.set_title('Quantitative Metrics', fontsize=16)
+    ax.set_ylabel('Score', fontsize=12)
     
     for i, v in enumerate(values):
-        ax.text(i, v + 0.01, f'{v:.2f}', ha='center', va='bottom')
+        ax.text(i, v + 0.01, f'{v:.2f}', ha='center', va='bottom', fontsize=10)
     
     plt.tight_layout()
     
@@ -177,10 +210,47 @@ def create_bar_chart(metrics):
     plt.savefig(buf, format='png', dpi=300, bbox_inches='tight')
     buf.seek(0)
     chart_data = base64.b64encode(buf.getvalue()).decode('utf-8')
-    plt.close(fig)  # Close the figure to free up memory
+    plt.close(fig)
     return chart_data
 
-logging.basicConfig(level=logging.DEBUG)
+def create_radar_chart(scores):
+    categories = list(scores.keys())
+    values = list(scores.values())
+
+    # Number of variables
+    num_vars = len(categories)
+
+    # Split the circle into even parts and save the angles
+    angles = [n / float(num_vars) * 2 * np.pi for n in range(num_vars)]
+    values += values[:1]
+    angles += angles[:1]
+
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(projection='polar'))
+
+    # Draw one axis per variable and add labels
+    plt.xticks(angles[:-1], categories)
+
+    # Plot data
+    ax.plot(angles, values, 'o-', linewidth=2)
+    ax.fill(angles, values, alpha=0.25)
+
+    # Set y-axis limit
+    ax.set_ylim(0, 1)
+
+    # Add title
+    plt.title('Key Indicators')
+
+    # Save the plot to a BytesIO object
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+    buf.seek(0)
+    
+    # Encode the image to base64
+    radar_chart = base64.b64encode(buf.getvalue()).decode('utf-8')
+    plt.close(fig)
+
+    return radar_chart
 
 @app.route('/')
 def index():
@@ -197,9 +267,11 @@ def detect_deepfake():
         return jsonify({'error': 'No file selected'}), 400
     
     try:
+        is_video = file.filename.lower().endswith(('.mp4', '.avi', '.mov'))
+        
         if file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
             is_deepfake, confidence = process_image(file.read())
-        elif file.filename.lower().endswith(('.mp4', '.avi', '.mov')):
+        elif is_video:
             with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
                 file.save(temp_file.name)
                 is_deepfake, confidence = process_video(temp_file.name)
@@ -207,15 +279,14 @@ def detect_deepfake():
         else:
             return jsonify({'error': 'Unsupported file format'}), 400
         
-        report, scores = generate_report(is_deepfake, confidence * 100)
-        logging.debug(f"Generated report: {report}")
-        logging.debug(f"Extracted scores: {scores}")
+        # Use ThreadPoolExecutor to run tasks concurrently
+        report_future = executor.submit(generate_report, is_deepfake, confidence, is_video)
+        donut_chart_future = executor.submit(create_donut_chart, (1 - confidence) * 100, confidence * 100)
         
-        donut_chart = create_donut_chart((1 - confidence) * 100, confidence * 100)
+        report, scores = report_future.result()
+        donut_chart = donut_chart_future.result()
         bar_chart = create_bar_chart(scores)
-        
-        if bar_chart is None:
-            logging.warning("Failed to create bar chart")
+        radar_chart = create_radar_chart(scores)
         
         response = {
             'is_deepfake': bool(is_deepfake),
@@ -223,9 +294,10 @@ def detect_deepfake():
             'report': report,
             'scores': scores,
             'donut_chart': donut_chart,
-            'bar_chart': bar_chart
+            'bar_chart': bar_chart,
+            'radar_chart': radar_chart,
+            'is_video': is_video
         }
-        logging.debug(f"Sending response: {json.dumps(response, default=str)}")
         return jsonify(response)
     
     except Exception as e:

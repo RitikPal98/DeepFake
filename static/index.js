@@ -128,60 +128,118 @@ function displayResult(result) {
     resultDiv.textContent = "Error: " + result.error;
     resultDiv.style.color = "var(--result-error)";
   } else {
-    const status = result.is_deepfake ? "DeepFake" : "Real";
-    const confidence = (result.confidence * 100).toFixed(2);
+    let topRowChartsHtml = `
+      <div class="chart top-row-chart">
+        <h3>Overall Confidence</h3>
+        <img src="data:image/png;base64,${result.donut_chart}" alt="Overall Confidence Chart">
+      </div>
+    `;
 
-    let barChartHtml = "";
+    if (result.radar_chart) {
+      topRowChartsHtml += `
+        <div class="chart top-row-chart">
+          <h3>Key Indicators</h3>
+          <img src="data:image/png;base64,${result.radar_chart}" alt="Key Indicators Radar Chart">
+        </div>
+      `;
+    }
+
+    let bottomRowChartHtml = "";
     if (result.bar_chart) {
-      barChartHtml = `
-        <div class="chart">
+      bottomRowChartHtml = `
+        <div class="chart bottom-row-chart">
           <h3>Quantitative Metrics</h3>
           <img src="data:image/png;base64,${result.bar_chart}" alt="Quantitative Metrics Chart">
         </div>
       `;
-    } else {
-      console.warn("Bar chart data is missing or invalid");
-      barChartHtml = "<p>Quantitative metrics chart is not available.</p>";
     }
 
     resultDiv.innerHTML = `
       <h2>Deepfake Detection Analysis</h2>
-      <div class="prediction-result">
-        <p><strong>Prediction:</strong> <span class="status">${status}</span></p>
-        <p><strong>Confidence:</strong> <span class="confidence">${confidence}%</span></p>
-      </div>
       <div class="charts-container">
-        <div class="chart">
-          <h3>Overall Confidence</h3>
-          <img src="data:image/png;base64,${
-            result.donut_chart
-          }" alt="Overall Confidence Chart">
+        <div class="top-row-charts">
+          ${topRowChartsHtml}
         </div>
-        ${barChartHtml}
+        <div class="bottom-row-chart">
+          ${bottomRowChartHtml}
+        </div>
       </div>
-      <h3>Detailed Report</h3>
-      <div class="report-content">${formatReport(result.report)}</div>
+      <div class="report-content">${formatReport(result)}</div>
     `;
   }
 }
 
-function formatReport(report) {
-  const paragraphs = report.split("\n\n");
+function formatReport(result) {
+  const sections = result.report
+    .split(/\n(?=\w+\n[-=]+)/)
+    .filter((section) => section.trim());
+  let formattedReport = `
+    <h3>Deepfake Detection Report</h3>
+    <div class="report-meta">
+      <p>Classification: <span class="status">${
+        result.is_deepfake ? "Deepfake" : "Real"
+      }</span></p>
+      <p>Confidence: <span class="confidence">${(
+        result.confidence * 100
+      ).toFixed(2)}%</span></p>
+    </div>
+  `;
 
-  const formattedParagraphs = paragraphs.map((paragraph) => {
-    if (paragraph.startsWith("**") && paragraph.endsWith("**")) {
-      return `<h4>${paragraph.replace(/\*\*/g, "")}</h4>`;
-    } else if (paragraph.includes("* ")) {
-      const listItems = paragraph
-        .split("* ")
-        .filter((item) => item.trim() !== "");
-      return `<ul>${listItems
-        .map((item) => `<li>${item.trim()}</li>`)
-        .join("")}</ul>`;
+  sections.forEach((section) => {
+    const [title, ...content] = section.split("\n");
+    const sectionContent = content.join("\n").trim();
+
+    formattedReport += `
+      <div class="report-section">
+        <h4>${title.trim()}</h4>
+        ${formatSectionContent(sectionContent)}
+      </div>
+    `;
+  });
+
+  return formattedReport;
+}
+
+function formatSectionContent(content) {
+  const lines = content.split("\n");
+  let formattedContent = "";
+  let inList = false;
+
+  lines.forEach((line) => {
+    line = line.trim();
+    if (line.startsWith("**") && line.endsWith("**")) {
+      // Handle bold subheadings
+      formattedContent += `<h5>${line.replace(/\*\*/g, "")}</h5>`;
+    } else if (line.startsWith("-") || line.startsWith("*")) {
+      // Handle list items
+      if (!inList) {
+        formattedContent += "<ul>";
+        inList = true;
+      }
+      formattedContent += `<li>${line.substring(1).trim()}</li>`;
     } else {
-      return `<p>${paragraph}</p>`;
+      if (inList) {
+        formattedContent += "</ul>";
+        inList = false;
+      }
+      // Handle regular paragraphs
+      if (line) {
+        formattedContent += `<p>${formatInlineStyles(line)}</p>`;
+      }
     }
   });
 
-  return formattedParagraphs.join("");
+  if (inList) {
+    formattedContent += "</ul>";
+  }
+
+  return formattedContent;
+}
+
+function formatInlineStyles(text) {
+  // Handle bold text
+  text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  // Handle italic text
+  text = text.replace(/\*(.*?)\*/g, "<em>$1</em>");
+  return text;
 }
