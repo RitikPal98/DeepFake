@@ -170,7 +170,7 @@ def extract_scores(report):
 def create_donut_chart(is_deepfake, confidence):
     fig, ax = plt.subplots(figsize=(6, 6))
     sizes = [confidence * 100, (1 - confidence) * 100]
-    labels = ['Fake', 'Real'] if is_deepfake else ['Real', 'Authentic']
+    labels = ['Fake', 'Real'] if is_deepfake else ['Real', 'Fake']
     colors = ['#E0B0FF', '#6a0dad'] if is_deepfake else ['#6a0dad', '#E0B0FF']
     
     ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90, pctdistance=0.85)
