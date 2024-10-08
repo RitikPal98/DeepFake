@@ -167,16 +167,16 @@ def extract_scores(report):
                     pass
     return scores
 
-def create_donut_chart(real_confidence, fake_confidence):
+def create_donut_chart(is_deepfake, confidence):
     fig, ax = plt.subplots(figsize=(6, 6))
-    sizes = [real_confidence, fake_confidence]
-    labels = ['Real', 'Fake']
-    colors = ['#6a0dad','#E0B0FF']
+    sizes = [confidence * 100, (1 - confidence) * 100]
+    labels = ['Fake', 'Real'] if is_deepfake else ['Real', 'Authentic']
+    colors = ['#E0B0FF', '#6a0dad'] if is_deepfake else ['#6a0dad', '#E0B0FF']
     
     ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90, pctdistance=0.85)
     centre_circle = plt.Circle((0, 0), 0.70, fc='white')
     ax.add_artist(centre_circle)
-    ax.set_title('Overall Confidence in Image Authenticity')
+    ax.set_title('Confidence in Image Classification')
     
     buf = io.BytesIO()
     plt.savefig(buf, format='png', dpi=300, bbox_inches='tight')
@@ -391,7 +391,7 @@ def detect_deepfake():
         
         # Use ThreadPoolExecutor to run tasks concurrently
         report_future = executor.submit(generate_report, is_deepfake, confidence, is_video)
-        donut_chart_future = executor.submit(create_donut_chart, (1 - confidence) * 100, confidence * 100)
+        donut_chart_future = executor.submit(create_donut_chart, is_deepfake, confidence)
         
         report, scores = report_future.result()
         donut_chart = donut_chart_future.result()
