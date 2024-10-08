@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Deepfake Detection Project</title>
+    <!-- Update this line to use Flask's url_for -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='landing-style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+
+<header class="navbar">
+    <div class="logo">DeepGuard</div>
+    <ul>
+        <li><a href="#home">Home</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#contact">Contact Us</a></li>
+        <li><a href="#faqs">FAQs</a></li>
+        <li><a href="#team">Development Team</a></li>
+    </ul>
+    <!-- <button class="cta-button">Get Started</button> -->
+</header>
+
+<!-- Hero Section -->
+<header id="home" class="hero-section">
+    <div class="overlay"></div>
+    <div class="container hero-content">
+        <h1>DeepFake Detection</h1>
+        <p>Unmasking the Truth Behind Digital Media</p>
+        <a href="{{ url_for('detect_deepfake_page') }}" class="hero-btn">Get Started</a>
+    </div>
+    <div class="image-section">
+        <img src="https://1.bp.blogspot.com/-MRbXiqh_dI0/XYo5jGfGVKI/AAAAAAAAEq0/hXWFTBr9XUIbWmiAJ-gLAaCufqFRj_YpwCLcBGAsYHQ/s1600/new_gif1.gif" alt="Deepfake Detection GIF" class="samples-image">
+    </div>
+</header>
+
+
+
+
+    <section id="features" class="features-section">
+        <div class="container">
+            <h2 class="section-title">Features Integrated</h2>
+            <div class="features-grid">
+                <!-- Feature 1 -->
+                <div class="feature-box">
+                    <i class="fas fa-video"></i>
+                    <h3>Deepfake Detection</h3>
+                    <p>Our AI model efficiently detects manipulated media in real-time, including images and videos.</p>
+                </div>
+    
+                <!-- Feature 2 -->
+                <div class="feature-box">
+                    <i class="fas fa-file-alt"></i>
+                    <h3>Detailed Reports</h3>
+                    <p>Get comprehensive reports on the probability of media being fake, with a percentage-based confidence score using LLM.</p>
+                </div>
+    
+                <!-- Feature 3 -->
+                <div class="feature-box">
+                    <i class="fas fa-file-audio"></i>
+                    <h3>Multiple Media Types</h3>
+                    <p>Detect deepfakes across various formats, including audio files, videos, and static images with equal accuracy.</p>
+                </div>
+    
+                <!-- Feature 4 -->
+                <div class="feature-box">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Data Integrity & Security</h3>
+                    <p>We prioritize the integrity of your data by using encrypted protocols to ensure that none of your media files are compromised.</p>
+                </div>
+    
+                <!-- Feature 5 -->
+                <div class="feature-box">
+                    <i class="fas fa-lock"></i>
+                    <h3>Privacy Protection</h3>
+                    <p>Our platform ensures that none of your data is shared with third parties. Your uploads are analyzed in a secure, isolated environment.</p>
+                </div>
+    
+                <!-- Feature 6 -->
+                <div class="feature-box">
+                    <i class="fas fa-brain"></i>
+                    <h3>Deep Learning Model</h3>
+                    <p>Our cutting-edge deep learning model is trained on millions of media samples, ensuring top-notch accuracy and detection precision.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+<!-- Technologies Used Section -->
+<section id="technologies" class="technologies-section">
+    <div class="container">
+        <h2>Technologies Used</h2>
+        <div class="tech-scroll">
+            <div class="tech-item">
+                <img src="https://www.svgrepo.com/show/376344/python.svg" alt="Python" />
+                <h3>Python</h3>
+            </div>
+            <div class="tech-item">
+                <img src="https://miro.medium.com/v2/resize:fit:750/format:webp/1*IMGOKBIN8qkOBt5CH55NSw.png" alt="PyTorch" />
+                <h3>PyTorch</h3>
+            </div>
+            <div class="tech-item">
+                <img src="https://production-media.paperswithcode.com/libraries/pytorch_v82PHL5.png" alt="torchvision" />
+                <h3>torchvision</h3>
+            </div>
+            <div class="tech-item">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Plotly-logo.png" alt="Plotly" />
+                <h3>Plotly</h3>
+            </div>
+            <div class="tech-item">
+                <img src="https://cdn.hashnode.com/res/hashnode/image/upload/v1618654142324/ChVxxNc1A.png?auto=compress,format&format=webp" alt="OpenCV" />
+                <h3>OpenCV</h3>
+            </div>
+            <div class="tech-item">
+                <img src="https://blog.appseed.us/content/images/2023/10/cover-flask.jpg" alt="Flask" />
+                <h3>Flask</h3>
+            </div>
+            <div class="tech-item">
+                <img src="https://matplotlib.org/stable/_static/logo_dark.svg" alt="Matplotlib" />
+                <h3>Matplotlib</h3>
+            </div>
+            <div class="tech-item">
+                <img src="https://python-pillow.org/assets/images/pillow-logo-248x250.png" alt="Pillow" />
+                <h3>Pillow</h3>
+            </div>
+            <div class="tech-item">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlCx4sXgMWnt0nADNEpzj8uTLljni741wBWQ&s" alt="timm" />
+                <h3>Timm</h3>
+            </div>
+            <div class="tech-item">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg" alt="Gimini" />
+                <h3>Google Gemini</h3>
+            </div>
+            <div class="tech-item">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQMjxMizytJNBM58oKKAC1MTndYORT1BId0bQ&s" alt="HTML" />
+                <h3>HTML5 CSS3 JS</h3>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+    <!-- Future Scope Section -->
+    <section id="future-scope" class="future-scope-section">
+        <div class="container">
+            <h2>Future Scope and Scalability</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <span>1</span>
+                    </div>
+                    <div class="timeline-content">
+                        <h3>Phase 1: Research & Development</h3>
+                        <p>In this phase, we will focus on exploring new algorithms and techniques to further improving accuracy and prediction of deepfake content.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <span>2</span>
+                    </div>
+                    <div class="timeline-content">
+                        <h3>Phase 2: Integration with Real-Time Systems</h3>
+                        <p>Integrating our model into more real-time applications and further scaled  to enhance its capability in detecting and preventing both audio and text-based deepfake content across social media platforms.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <span>3</span>
+                    </div>
+                    <div class="timeline-content">
+                        <h3>Phase 3: Public Deployment</h3>
+                        <p>Launching the solution to public and commercial platforms, ensuring widespread usage and accessibility using AWS.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+
+    <!-- FAQs Section -->
+    <section id="faqs" class="faq-section">
+        <h2>Frequently Asked Questions (FAQs)</h2>
+    
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>What is the purpose of this application?</span>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                <p>This application is designed to help detect and classify deepfake content in images, videos, and audio files. It uses advanced machine learning models to identify manipulated or artificially generated media, helping users verify the authenticity of digital content.</p>
+            </div>
+        </div>
+    
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>How does the app measure the "fakeness" of content?</span>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                <p>The app analyzes the content and provides a "fakeness" score in terms of percentage. After analysis, it generates a detailed report showing how likely the content is to be fake based on the model's classification results.</p>
+            </div>
+        </div>
+    
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>What is the accuracy of the deepfake detection model?</span>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                <p>Our model has been trained with a wide range of deepfake data and achieves an accuracy of around 95%, ensuring a high level of reliability when detecting fake media.</p>
+            </div>
+        </div>
+    
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>Who developed this deepfake classification model?</span>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                <p>The model was created by a dedicated team of AI researchers, software engineers, data scientists, and designers. You can learn more about the developer team in the About Us section.</p>
+            </div>
+        </div>
+    
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>What types of content can this app analyze?</span>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                <p>The app is capable of detecting deepfakes in images, videos, and audio files. It uses separate models trained specifically to identify manipulations in each type of media.</p>
+            </div>
+        </div>
+    
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>Is the app suitable for personal and professional use?</span>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                <p>Yes, this app is suitable for both personal use (e.g., verifying content shared on social media) and professional use (e.g., verifying the authenticity of digital media for journalism or legal purposes).</p>
+            </div>
+        </div>
+    
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>How can I trust the results provided by the model?</span>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                <p>While no model is 100% perfect, our model's high accuracy and comprehensive reporting system ensure that the detection results are trustworthy. We encourage users to always review the detailed reports provided.</p>
+            </div>
+        </div>
+    
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>What will happen if the video containing no faces is uploaded?</span>
+                <span class="faq-toggle">+</span>
+            </div>
+            <div class="faq-answer">
+                <p>If a video with no faces is uploaded, the deepfake detection model may not analyze it effectively, as it is primarily trained to detect manipulated facial features. In such cases, the app may indicate a low likelihood of deepfake manipulation or notify that no faces were found.</p>
+            </div>
+        </div>
+    </section>
+    
+
+    <!-- Contact Us Section -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <h2>Contact Us</h2>
+            <p>We’d love to hear from you! Reach out to us for more information on our deepfake detection solutions or to collaborate with us.</p>
+            <form class="contact-form" action="submit-form.php" method="POST">
+                <input type="text" name="name" placeholder="Your Name" required>
+                <input type="email" name="email" placeholder="Your Email" required>
+                <textarea name="message" rows="6" placeholder="Your Message" required></textarea>
+                <button type="submit">Send Message</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Development Team Section -->
+    <section id="team" class="team-section">
+        <div class="container">
+            <h2>Our Development Team</h2>
+            <div class="team-grid">
+                <div class="team-member">
+                    <a href="https://www.linkedin.com/in/muhammad-aahil-a29971245/"target="_blank"><img src="https://i.ibb.co/d4m5Tww/pics2.jpg" alt="pic" border="0" /></a>
+                    <h3>Muhammad Aahil</h3>
+                </div>
+                <div class="team-member">
+                    <a href="https://www.linkedin.com/in/gaurav-pandey-17b7a025a/?originalSubdomain=in"target="_blank"><img src="https://i.ibb.co/MhNCKWt/pic3.jpg" alt="pic3" border="4" /></a>
+                    <h3>Gaurav Pandey</h3>
+                </div>
+                <div class="team-member">
+                    <a href="https://www.linkedin.com/in/pawan-joshi-42112824b/?originalSubdomain=in"target="_blank"><img src="https://i.ibb.co/VHWXHFT/pic2.jpg" alt="pic2" border="4" /></a>
+                    <h3>Pawan Joshi</h3>
+                </div>
+                <div class="team-member">
+                    <a href="https://www.linkedin.com/in/ritik-pal-1a8255168/?originalSubdomain=in"target="_blank"><img src="https://i.ibb.co/crK1P60/pic4.jpg" alt="pic4" border="4" /></a>
+                    <h3>Ritik Pal</h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Deepfake Detection Project. All rights reserved.</p>
+            <p>Delhi Technological University</p>
+        </div>
+    </footer>
+
+    <!-- Update this line to use Flask's url_for -->
+    <script src="{{ url_for('static', filename='landing-script.js') }}"></script>
+</body>
+</html>

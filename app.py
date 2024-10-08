@@ -7,7 +7,7 @@ from PIL import Image
 import io
 import cv2
 import numpy as np
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, render_template, send_from_directory, redirect, url_for
 from deepfake_model import load_ensemble_model
 import os
 import tempfile
@@ -108,7 +108,7 @@ def generate_report(is_deepfake, confidence, is_video=False):
 
     prompt = f"""Generate a detailed report on a deepfake detection analysis for a{'n' if media_type[0] in 'aeiou' else ''} {media_type}. The {media_type} was classified as {classification} with a confidence score of {confidence_percentage:.2f}%.
 
-Please structure the report as follows, using the exact headings and subheadings provided:
+Please structure the report as follows, using the exact headings provided:
 
 Introduction
 Briefly describe the classification result and the confidence score.
@@ -132,10 +132,7 @@ Key Indicators
 {'- Temporal Consistency: [Score between 0 and 1]' if is_video else ''}
 
 Interpretation
-Provide insights on what these indicators suggest about the {media_type}'s authenticity. Discuss any limitations or caveats in the analysis.
-
-Recommendations
-Suggest next steps or additional analyses for further verification. Include at least three specific recommendations.
+Provide insights on what these indicators suggest about the {media_type}'s authenticity.
 
 Please ensure the report is clear, coherent, and maintains a professional tone. Use bulleted lists where appropriate for better readability."""
 
@@ -355,7 +352,11 @@ def process_video_for_face(video_path):
     return None, None, None, None
 
 @app.route('/')
-def index():
+def landing():
+    return render_template('landing-index.html')
+
+@app.route('/detect-deepfake')
+def detect_deepfake_page():
     return render_template('index.html')
 
 @app.route('/detect', methods=['POST'])

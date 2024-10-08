@@ -131,12 +131,18 @@ function displayResult(result) {
     resultDiv.innerHTML = `
       <h2>Deepfake Detection Analysis</h2>
       <div class="report-meta">
-        <p>Classification: <span class="status">${
-          result.is_deepfake ? "Deepfake" : "Real"
-        }</span></p>
-        <p>Confidence: <span class="confidence">${(
-          result.confidence * 100
-        ).toFixed(2)}%</span></p>
+        <div class="meta-item">
+          <span class="meta-label">Classification:</span>
+          <span class="meta-value ${
+            result.is_deepfake ? "deepfake" : "real"
+          }">${result.is_deepfake ? "Deepfake" : "Real"}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Confidence:</span>
+          <span class="meta-value confidence">${(
+            result.confidence * 100
+          ).toFixed(2)}%</span>
+        </div>
       </div>
     `;
 
@@ -171,18 +177,6 @@ function displayResult(result) {
     }
     chartsHtml += "</div>"; // Close first row
 
-    // Second row: Quantitative Metrics
-    if (result.bar_chart) {
-      chartsHtml += `
-        <div class="charts-row">
-          <div class="chart chart-full">
-            <h3>Quantitative Metrics</h3>
-            <div id="bar-chart-container" style="width: 100%; height: 400px;"></div>
-          </div>
-        </div>
-      `;
-    }
-
     chartsHtml += "</div>"; // Close charts-container
     resultDiv.innerHTML += chartsHtml;
 
@@ -190,22 +184,6 @@ function displayResult(result) {
     resultDiv.innerHTML += `<div class="report-content">${formatReport(
       result
     )}</div>`;
-
-    // Render the bar chart
-    if (result.bar_chart) {
-      const img = new Image();
-      img.onload = function () {
-        const container = document.getElementById("bar-chart-container");
-        container.style.height = `${
-          (img.height / img.width) * container.offsetWidth
-        }px`;
-        container.style.backgroundImage = `url(data:image/png;base64,${result.bar_chart})`;
-        container.style.backgroundSize = "contain";
-        container.style.backgroundRepeat = "no-repeat";
-        container.style.backgroundPosition = "center";
-      };
-      img.src = `data:image/png;base64,${result.bar_chart}`;
-    }
   }
 }
 
@@ -224,21 +202,35 @@ function displayTracedImageAndHeatmaps(
     const imageContainer = document.createElement("div");
     imageContainer.className = "image-container";
     imageContainer.innerHTML = `
+      <h3>Visual Analysis</h3>
+      <p>These visualizations provide insights into different aspects of the image analysis:</p>
       <div class="image-box">
-        <h3>Face Detection</h3>
-        <img src="data:image/jpeg;base64,${tracedImageData}" alt="Traced Face">
+        <h4>Face Detection</h4>
+        <div class="image-wrapper">
+          <img src="data:image/jpeg;base64,${tracedImageData}" alt="Traced Face">
+          <p class="image-overlay">This image shows the detected face with a bounding box. Accurate face detection is crucial for deepfake analysis.</p>
+        </div>
       </div>
       <div class="image-box">
-        <h3>Face Heatmap</h3>
-        <img src="data:image/jpeg;base64,${faceHeatmapData}" alt="Face Heatmap">
+        <h4>Face Heatmap</h4>
+        <div class="image-wrapper">
+          <img src="data:image/jpeg;base64,${faceHeatmapData}" alt="Face Heatmap">
+          <p class="image-overlay">The face heatmap highlights areas of interest within the detected face region. Warmer colors indicate areas of higher importance in the analysis.</p>
+        </div>
       </div>
       <div class="image-box">
-        <h3>Landmark Heatmap</h3>
-        <img src="data:image/jpeg;base64,${landmarkHeatmapData}" alt="Landmark Heatmap">
+        <h4>Landmark Heatmap</h4>
+        <div class="image-wrapper">
+          <img src="data:image/jpeg;base64,${landmarkHeatmapData}" alt="Landmark Heatmap">
+          <p class="image-overlay">This heatmap shows detected facial landmarks. Inconsistencies in landmark placement can be indicators of manipulation.</p>
+        </div>
       </div>
       <div class="image-box">
-        <h3>Attention Heatmap</h3>
-        <img src="data:image/jpeg;base64,${attentionHeatmapData}" alt="Attention Heatmap">
+        <h4>Attention Heatmap</h4>
+        <div class="image-wrapper">
+          <img src="data:image/jpeg;base64,${attentionHeatmapData}" alt="Attention Heatmap">
+          <p class="image-overlay">The attention heatmap reveals areas where the deepfake detection model is focusing. It can help identify suspicious regions or artifacts.</p>
+        </div>
       </div>
     `;
     resultDiv.appendChild(imageContainer);
@@ -260,27 +252,38 @@ function formatReport(result) {
     .split(/\n(?=\w+\n[-=]+)/)
     .filter((section) => section.trim());
   let formattedReport = `
-    <h3>Deepfake Detection Report</h3>
+    <h3 class="report-main-heading">Deepfake Detection Report</h3>
     <div class="report-meta">
-      <p>Classification: <span class="status">${
-        result.is_deepfake ? "Deepfake" : "Real"
-      }</span></p>
-      <p>Confidence: <span class="confidence">${(
-        result.confidence * 100
-      ).toFixed(2)}%</span></p>
+      <div class="meta-item">
+        <span class="meta-label">Classification:</span>
+        <span class="meta-value ${result.is_deepfake ? "deepfake" : "real"}">${
+    result.is_deepfake ? "Deepfake" : "Real"
+  }</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Confidence:</span>
+        <span class="meta-value confidence">${(result.confidence * 100).toFixed(
+          2
+        )}%</span>
+      </div>
     </div>
   `;
 
   sections.forEach((section) => {
     const [title, ...content] = section.split("\n");
-    const sectionContent = content.join("\n").trim();
+    const sectionTitle = title.trim().toLowerCase();
 
-    formattedReport += `
-      <div class="report-section">
-        <h4>${title.trim()}</h4>
-        ${formatSectionContent(sectionContent)}
-      </div>
-    `;
+    // Skip the Recommendations and Limitations sections
+    if (sectionTitle !== "recommendations" && sectionTitle !== "limitations") {
+      const sectionContent = content.join("\n").trim();
+
+      formattedReport += `
+        <div class="report-section">
+          <h4 class="report-heading">${title.trim()}</h4>
+          ${formatSectionContent(sectionContent)}
+        </div>
+      `;
+    }
   });
 
   return formattedReport;
@@ -295,7 +298,10 @@ function formatSectionContent(content) {
     line = line.trim();
     if (line.startsWith("**") && line.endsWith("**")) {
       // Handle bold subheadings
-      formattedContent += `<h5>${line.replace(/\*\*/g, "")}</h5>`;
+      formattedContent += `<h5 class="report-subheading">${line.replace(
+        /\*\*/g,
+        ""
+      )}</h5>`;
     } else if (line.startsWith("-") || line.startsWith("*")) {
       // Handle list items
       if (!inList) {
