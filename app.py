@@ -170,8 +170,8 @@ def extract_scores(report):
 def create_donut_chart(real_confidence, fake_confidence):
     fig, ax = plt.subplots(figsize=(6, 6))
     sizes = [real_confidence, fake_confidence]
-    labels = ['Fake', 'Real']
-    colors = ['#E0B0FF','#6a0dad']
+    labels = ['Real', 'Fake']
+    colors = ['#6a0dad','#E0B0FF']
     
     ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90, pctdistance=0.85)
     centre_circle = plt.Circle((0, 0), 0.70, fc='white')
