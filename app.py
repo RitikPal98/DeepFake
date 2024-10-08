@@ -253,50 +253,84 @@ def create_radar_chart(scores):
     return radar_chart
 
 # Add this function to perform improved face detection and tracing
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 def detect_and_trace_face(image):
     logging.info("Starting face detection and tracing")
     
-    # Define paths for the model files using absolute paths
-    prototxt_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models', 'deploy.prototxt')
-    caffemodel_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models', 'res10_300x300_ssd_iter_140000.caffemodel')
+    # Load face detection model
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     
-    # Check if model files exist
-    if not os.path.exists(prototxt_path) or not os.path.exists(caffemodel_path):
-        logging.error(f"Model files not found. Prototxt path: {prototxt_path}, Caffemodel path: {caffemodel_path}")
-        return None
+    # Convert image to grayscale for face detection
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     
-    try:
-        logging.info("Loading face detection model")
-        net = cv2.dnn.readNetFromCaffe(prototxt_path, caffemodel_path)
-    except cv2.error as e:
-        logging.error(f"Error loading the face detection model: {str(e)}")
-        return None
+    # Detect faces
+    faces = face_cascade.detectMultiScale(gray, 1.1, 4)
     
-    (h, w) = image.shape[:2]
-    blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
-    
-    logging.info("Performing face detection")
-    net.setInput(blob)
-    detections = net.forward()
-    
-    face_detected = False
-    for i in range(0, detections.shape[2]):
-        confidence = detections[0, 0, i, 2]
-        if confidence > 0.5:
-            face_detected = True
-            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-            (startX, startY, endX, endY) = box.astype("int")
-            cv2.rectangle(image, (startX, startY), (endX, endY), (0, 255, 0), 2)
-    
-    if not face_detected:
+    if len(faces) == 0:
         logging.warning("No faces detected in the image")
-        return None
+        return None, None, None, None
     
-    logging.info("Face detection completed, converting image to base64")
+    # Get the first detected face
+    (x, y, w, h) = faces[0]
+    
+    # Generate heatmaps
+    face_heatmap = generate_face_heatmap(image, (x, y, w, h))
+    landmark_heatmap = generate_landmark_heatmap(image, gray, (x, y, w, h))
+    attention_heatmap = generate_attention_heatmap(image)
+    
+    # Draw face rectangle on the original image
+    cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
+    
+    # Convert images to base64
+    traced_image = cv2_to_base64(image)
+    face_heatmap_base64 = cv2_to_base64(face_heatmap)
+    landmark_heatmap_base64 = cv2_to_base64(landmark_heatmap)
+    attention_heatmap_base64 = cv2_to_base64(attention_heatmap)
+    
+    return traced_image, face_heatmap_base64, landmark_heatmap_base64, attention_heatmap_base64
+
+def generate_face_heatmap(image, face):
+    heatmap = np.zeros(image.shape[:2], dtype=np.float32)
+    (x, y, w, h) = face
+    cv2.rectangle(heatmap, (x, y), (x+w, y+h), 1, -1)
+    heatmap = cv2.GaussianBlur(heatmap, (51, 51), 0)
+    heatmap = (heatmap - heatmap.min()) / (heatmap.max() - heatmap.min())
+    heatmap = (heatmap * 255).astype(np.uint8)
+    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+    return cv2.addWeighted(image, 0.7, heatmap, 0.3, 0)
+
+def generate_landmark_heatmap(image, gray, face):
+    (x, y, w, h) = face
+    heatmap = np.zeros(image.shape[:2], dtype=np.float32)
+    
+    # Use Shi-Tomasi corner detection as a simple approximation of facial landmarks
+    corners = cv2.goodFeaturesToTrack(gray[y:y+h, x:x+w], 25, 0.01, 10)
+    if corners is not None:
+        corners = np.round(corners).astype(int)  # Replace np.int0 with this line
+        
+        for corner in corners:
+            cx, cy = corner.ravel()
+            cv2.circle(heatmap, (x+cx, y+cy), 5, 1, -1)
+    
+    heatmap = cv2.GaussianBlur(heatmap, (31, 31), 0)
+    heatmap = (heatmap - heatmap.min()) / (heatmap.max() - heatmap.min() + 1e-8)  # Add small epsilon to avoid division by zero
+    heatmap = (heatmap * 255).astype(np.uint8)
+    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+    return cv2.addWeighted(image, 0.7, heatmap, 0.3, 0)
+
+def generate_attention_heatmap(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    heatmap = cv2.Laplacian(gray, cv2.CV_64F)
+    heatmap = np.abs(heatmap)
+    heatmap = (heatmap - heatmap.min()) / (heatmap.max() - heatmap.min())
+    heatmap = (heatmap * 255).astype(np.uint8)
+    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+    return cv2.addWeighted(image, 0.7, heatmap, 0.3, 0)
+
+def cv2_to_base64(image):
     _, buffer = cv2.imencode('.jpg', image)
-    traced_image = base64.b64encode(buffer).decode('utf-8')
-    
-    return traced_image
+    return base64.b64encode(buffer).decode('utf-8')
 
 def process_video_for_face(video_path):
     cap = cv2.VideoCapture(video_path)
@@ -311,14 +345,14 @@ def process_video_for_face(video_path):
         if frame_count % 30 != 0:  # Process every 30th frame
             continue
         
-        traced_image = detect_and_trace_face(frame)
-        if traced_image:
+        traced_image, face_heatmap, landmark_heatmap, attention_heatmap = detect_and_trace_face(frame)
+        if traced_image and face_heatmap and landmark_heatmap and attention_heatmap:
             cap.release()
-            return traced_image
+            return traced_image, face_heatmap, landmark_heatmap, attention_heatmap
     
     cap.release()
     logging.warning("No faces detected in the video")
-    return None
+    return None, None, None, None
 
 @app.route('/')
 def index():
@@ -341,18 +375,18 @@ def detect_deepfake():
             file_data = file.read()
             img = cv2.imdecode(np.frombuffer(file_data, np.uint8), cv2.IMREAD_COLOR)
             is_deepfake, confidence = process_image(file_data)
-            traced_image = detect_and_trace_face(img)
+            traced_image, face_heatmap, landmark_heatmap, attention_heatmap = detect_and_trace_face(img)
         elif is_video:
             with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
                 file.save(temp_file.name)
                 is_deepfake, confidence = process_video(temp_file.name)
-                traced_image = process_video_for_face(temp_file.name)
+                traced_image, face_heatmap, landmark_heatmap, attention_heatmap = process_video_for_face(temp_file.name)
             os.unlink(temp_file.name)
         else:
             return jsonify({'error': 'Unsupported file format'}), 400
         
         if traced_image is None:
-            logging.warning("Face tracing failed, proceeding without traced image")
+            logging.warning("Face tracing or heatmap generation failed, proceeding without images")
         
         # Use ThreadPoolExecutor to run tasks concurrently
         report_future = executor.submit(generate_report, is_deepfake, confidence, is_video)
@@ -372,7 +406,10 @@ def detect_deepfake():
             'bar_chart': bar_chart,
             'radar_chart': radar_chart,
             'is_video': is_video,
-            'traced_image': traced_image
+            'traced_image': traced_image,
+            'face_heatmap': face_heatmap,
+            'landmark_heatmap': landmark_heatmap,
+            'attention_heatmap': attention_heatmap
         }
         return jsonify(response)
     

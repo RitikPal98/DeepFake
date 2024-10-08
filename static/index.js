@@ -128,60 +128,131 @@ function displayResult(result) {
     resultDiv.textContent = "Error: " + result.error;
     resultDiv.style.color = "var(--result-error)";
   } else {
-    let topRowChartsHtml = `
-      <div class="chart top-row-chart">
-        <h3>Overall Confidence</h3>
-        <img src="data:image/png;base64,${result.donut_chart}" alt="Overall Confidence Chart">
+    resultDiv.innerHTML = `
+      <h2>Deepfake Detection Analysis</h2>
+      <div class="report-meta">
+        <p>Classification: <span class="status">${
+          result.is_deepfake ? "Deepfake" : "Real"
+        }</span></p>
+        <p>Confidence: <span class="confidence">${(
+          result.confidence * 100
+        ).toFixed(2)}%</span></p>
       </div>
     `;
 
+    // Display the traced image and heatmaps
+    displayTracedImageAndHeatmaps(
+      result.traced_image,
+      result.face_heatmap,
+      result.landmark_heatmap,
+      result.attention_heatmap
+    );
+
+    // Display charts
+    let chartsHtml = '<div class="charts-container">';
+
+    // First row: Overall Confidence and Key Indicators
+    chartsHtml += '<div class="charts-row">';
+    if (result.donut_chart) {
+      chartsHtml += `
+        <div class="chart chart-half">
+          <h3>Overall Confidence</h3>
+          <img src="data:image/png;base64,${result.donut_chart}" alt="Overall Confidence Chart">
+        </div>
+      `;
+    }
     if (result.radar_chart) {
-      topRowChartsHtml += `
-        <div class="chart top-row-chart">
+      chartsHtml += `
+        <div class="chart chart-half">
           <h3>Key Indicators</h3>
           <img src="data:image/png;base64,${result.radar_chart}" alt="Key Indicators Radar Chart">
         </div>
       `;
     }
+    chartsHtml += "</div>"; // Close first row
 
-    let bottomRowChartHtml = "";
+    // Second row: Quantitative Metrics
     if (result.bar_chart) {
-      bottomRowChartHtml = `
-        <div class="chart bottom-row-chart">
-          <h3>Quantitative Metrics</h3>
-          <img src="data:image/png;base64,${result.bar_chart}" alt="Quantitative Metrics Chart">
+      chartsHtml += `
+        <div class="charts-row">
+          <div class="chart chart-full">
+            <h3>Quantitative Metrics</h3>
+            <div id="bar-chart-container" style="width: 100%; height: 400px;"></div>
+          </div>
         </div>
       `;
     }
 
-    resultDiv.innerHTML = `
-      <h2>Deepfake Detection Analysis</h2>
-      <div class="charts-container">
-        <div class="top-row-charts">
-          ${topRowChartsHtml}
-        </div>
-        <div class="bottom-row-chart">
-          ${bottomRowChartHtml}
-        </div>
-      </div>
-      <div class="report-content">${formatReport(result)}</div>
-    `;
+    chartsHtml += "</div>"; // Close charts-container
+    resultDiv.innerHTML += chartsHtml;
 
-    // Display the traced image
-    displayTracedImage(result.traced_image);
+    // Display the report content
+    resultDiv.innerHTML += `<div class="report-content">${formatReport(
+      result
+    )}</div>`;
+
+    // Render the bar chart
+    if (result.bar_chart) {
+      const img = new Image();
+      img.onload = function () {
+        const container = document.getElementById("bar-chart-container");
+        container.style.height = `${
+          (img.height / img.width) * container.offsetWidth
+        }px`;
+        container.style.backgroundImage = `url(data:image/png;base64,${result.bar_chart})`;
+        container.style.backgroundSize = "contain";
+        container.style.backgroundRepeat = "no-repeat";
+        container.style.backgroundPosition = "center";
+      };
+      img.src = `data:image/png;base64,${result.bar_chart}`;
+    }
   }
 }
 
-function displayTracedImage(tracedImageData) {
-  if (tracedImageData) {
-    const tracedImageContainer = document.createElement("div");
-    tracedImageContainer.className = "traced-image-container";
-    tracedImageContainer.innerHTML = `
-      <h3>Face Detection</h3>
-      <img src="data:image/jpeg;base64,${tracedImageData}" alt="Traced Face">
+function displayTracedImageAndHeatmaps(
+  tracedImageData,
+  faceHeatmapData,
+  landmarkHeatmapData,
+  attentionHeatmapData
+) {
+  if (
+    tracedImageData &&
+    faceHeatmapData &&
+    landmarkHeatmapData &&
+    attentionHeatmapData
+  ) {
+    const imageContainer = document.createElement("div");
+    imageContainer.className = "image-container";
+    imageContainer.innerHTML = `
+      <div class="image-box">
+        <h3>Face Detection</h3>
+        <img src="data:image/jpeg;base64,${tracedImageData}" alt="Traced Face">
+      </div>
+      <div class="image-box">
+        <h3>Face Heatmap</h3>
+        <img src="data:image/jpeg;base64,${faceHeatmapData}" alt="Face Heatmap">
+      </div>
+      <div class="image-box">
+        <h3>Landmark Heatmap</h3>
+        <img src="data:image/jpeg;base64,${landmarkHeatmapData}" alt="Landmark Heatmap">
+      </div>
+      <div class="image-box">
+        <h3>Attention Heatmap</h3>
+        <img src="data:image/jpeg;base64,${attentionHeatmapData}" alt="Attention Heatmap">
+      </div>
     `;
-    resultDiv.appendChild(tracedImageContainer);
+    resultDiv.appendChild(imageContainer);
   }
+}
+
+function createChartDiv(title, chartData) {
+  const chartDiv = document.createElement("div");
+  chartDiv.className = "chart";
+  chartDiv.innerHTML = `
+    <h3>${title}</h3>
+    <img src="data:image/png;base64,${chartData}" alt="${title} Chart">
+  `;
+  return chartDiv;
 }
 
 function formatReport(result) {
