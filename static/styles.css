@@ -460,3 +460,28 @@ em {
         margin-bottom: 24px;
     }
 }
+
+/* Add these styles at the end of the file */
+.traced-image-container {
+    margin-top: 30px;
+    text-align: center;
+    background-color: var(--report-bg);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.traced-image-container h3 {
+    color: var(--primary-color);
+    margin-bottom: 16px;
+    font-size: 1.4em;
+    font-weight: 600;
+}
+
+.traced-image-container img {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px var(--shadow-color);
+    object-fit: contain;
+}

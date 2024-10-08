@@ -166,6 +166,21 @@ function displayResult(result) {
       </div>
       <div class="report-content">${formatReport(result)}</div>
     `;
+
+    // Display the traced image
+    displayTracedImage(result.traced_image);
+  }
+}
+
+function displayTracedImage(tracedImageData) {
+  if (tracedImageData) {
+    const tracedImageContainer = document.createElement("div");
+    tracedImageContainer.className = "traced-image-container";
+    tracedImageContainer.innerHTML = `
+      <h3>Face Detection</h3>
+      <img src="data:image/jpeg;base64,${tracedImageData}" alt="Traced Face">
+    `;
+    resultDiv.appendChild(tracedImageContainer);
   }
 }
 

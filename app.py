@@ -252,6 +252,74 @@ def create_radar_chart(scores):
 
     return radar_chart
 
+# Add this function to perform improved face detection and tracing
+def detect_and_trace_face(image):
+    logging.info("Starting face detection and tracing")
+    
+    # Define paths for the model files using absolute paths
+    prototxt_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models', 'deploy.prototxt')
+    caffemodel_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models', 'res10_300x300_ssd_iter_140000.caffemodel')
+    
+    # Check if model files exist
+    if not os.path.exists(prototxt_path) or not os.path.exists(caffemodel_path):
+        logging.error(f"Model files not found. Prototxt path: {prototxt_path}, Caffemodel path: {caffemodel_path}")
+        return None
+    
+    try:
+        logging.info("Loading face detection model")
+        net = cv2.dnn.readNetFromCaffe(prototxt_path, caffemodel_path)
+    except cv2.error as e:
+        logging.error(f"Error loading the face detection model: {str(e)}")
+        return None
+    
+    (h, w) = image.shape[:2]
+    blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
+    
+    logging.info("Performing face detection")
+    net.setInput(blob)
+    detections = net.forward()
+    
+    face_detected = False
+    for i in range(0, detections.shape[2]):
+        confidence = detections[0, 0, i, 2]
+        if confidence > 0.5:
+            face_detected = True
+            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+            (startX, startY, endX, endY) = box.astype("int")
+            cv2.rectangle(image, (startX, startY), (endX, endY), (0, 255, 0), 2)
+    
+    if not face_detected:
+        logging.warning("No faces detected in the image")
+        return None
+    
+    logging.info("Face detection completed, converting image to base64")
+    _, buffer = cv2.imencode('.jpg', image)
+    traced_image = base64.b64encode(buffer).decode('utf-8')
+    
+    return traced_image
+
+def process_video_for_face(video_path):
+    cap = cv2.VideoCapture(video_path)
+    frame_count = 0
+    
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        
+        frame_count += 1
+        if frame_count % 30 != 0:  # Process every 30th frame
+            continue
+        
+        traced_image = detect_and_trace_face(frame)
+        if traced_image:
+            cap.release()
+            return traced_image
+    
+    cap.release()
+    logging.warning("No faces detected in the video")
+    return None
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -270,14 +338,21 @@ def detect_deepfake():
         is_video = file.filename.lower().endswith(('.mp4', '.avi', '.mov'))
         
         if file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
-            is_deepfake, confidence = process_image(file.read())
+            file_data = file.read()
+            img = cv2.imdecode(np.frombuffer(file_data, np.uint8), cv2.IMREAD_COLOR)
+            is_deepfake, confidence = process_image(file_data)
+            traced_image = detect_and_trace_face(img)
         elif is_video:
             with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
                 file.save(temp_file.name)
                 is_deepfake, confidence = process_video(temp_file.name)
+                traced_image = process_video_for_face(temp_file.name)
             os.unlink(temp_file.name)
         else:
             return jsonify({'error': 'Unsupported file format'}), 400
+        
+        if traced_image is None:
+            logging.warning("Face tracing failed, proceeding without traced image")
         
         # Use ThreadPoolExecutor to run tasks concurrently
         report_future = executor.submit(generate_report, is_deepfake, confidence, is_video)
@@ -296,7 +371,8 @@ def detect_deepfake():
             'donut_chart': donut_chart,
             'bar_chart': bar_chart,
             'radar_chart': radar_chart,
-            'is_video': is_video
+            'is_video': is_video,
+            'traced_image': traced_image
         }
         return jsonify(response)
     
