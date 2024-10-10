@@ -21,7 +21,15 @@ import logging
 import matplotlib
 import random
 from concurrent.futures import ThreadPoolExecutor
+from dotenv import load_dotenv
+# Load environment variables from a .env file
+load_dotenv()
 
+# Get the API key from environment variables
+api_key = os.getenv('GEMINI_API_KEY')
+
+# Gemini API setup
+genai.configure(api_key=api_key)
 matplotlib.use('Agg')  # Use Agg backend to avoid GUI issues
 
 # Gemini API setup
