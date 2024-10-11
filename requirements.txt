@@ -9,3 +9,4 @@ matplotlib
 plotly
 google-generativeai
 numpy
+python-dotenv
