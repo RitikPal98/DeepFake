@@ -32,9 +32,6 @@ api_key = os.getenv('GEMINI_API_KEY')
 genai.configure(api_key=api_key)
 matplotlib.use('Agg')  # Use Agg backend to avoid GUI issues
 
-# Gemini API setup
-genai.configure(api_key='AIzaSyD3DiCmNhedup1mSU9QUOw8LVuUIgByOlA')
-
 # Define the paths to the weight files
 weight_paths = [
     'weights/final_111_DeepFakeClassifier_tf_efficientnet_b7_ns_0_36',
